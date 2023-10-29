@@ -7,7 +7,7 @@ struct curp_registro
     // Otros campos de la estructura si es necesario
 };
 
-void ordenarinseccion(struct curp_registro registros[], int num_registros)
+void ordenarinse(struct curp_registro registros[], int num_registros)
 {
     struct curp_registro actual;
     for (int i = 1; i < num_registros; i++)

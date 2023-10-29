@@ -2,14 +2,15 @@
 #include <string.h>
 #include <ctype.h>
 #include "RRD.h"
+#include <time.h>
 
 struct curp_registro
 {
-    char Nombre[20];
-    char Nombre2[20];
-    char ApPat[20];
-    char ApMat[20];
-    char Lugar[20];
+    char Nombre[30];
+    char Nombre2[30];
+    char ApPat[30];
+    char ApMat[30];
+    char Lugar[40];
     char CURP[19];
     int Matricula;
     char Fecha[11];
@@ -30,15 +31,25 @@ int nacimiento(int mes, int bis);
 int Bisiesto(int year);
 int generarNumeroAleatorio(int min, int max);
 int nacimientoaleatorios(int mes, int bis);
-void eliminarregistro(struct curp_registro registros[], int *num_registros);
+void eliminarregistro(struct curp_registro registros[], int *num_registros, int matricula_a_eliminar);
 void imprimir(struct curp_registro registros[], int num_registros);
 void ordenar(struct curp_registro registros[], int *num_registros);
-void ordenarinseccion(struct curp_registro registros[], int *num_registros);
+int particion(struct curp_registro registros[], int ri, int rs);
+void quicksort(struct curp_registro registros[], int ri, int rs);
+void ordenarQuickSort(struct curp_registro registros[], int *num_registros);
+void buscar(struct curp_registro registros[], int *num_registros);
+void texto(struct curp_registro registros[], int num_registros, FILE *fa);
+void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar);
+int buscar2(struct curp_registro registros[], int *num_registros, int matricula);
 
 int main()
 {
+    srand(time(NULL));
     struct curp_registro registro[2000];
+    FILE *archivo;
+    archivo = fopen("REGISTROS.txt", "a");
     int opc, opc2, menu, num_registros = 0;
+    int matricula_a_eliminar, num_matricula = 0, encontrado;
     do
     {
         menu = 0;
@@ -55,11 +66,25 @@ int main()
             switch (opc2)
             {
             case 1:
-                pedirdatos(registro, &num_registros);
+                if (num_registros < 1999)
+                {
+                    pedirdatos(registro, &num_registros);
+                }
+                else
+                {
+                    printf("REGISTROS LLENOS");
+                }
                 menu = repetir();
                 break;
             case 2:
-                datosautomaticos(registro, &num_registros);
+                if (num_registros < 1999)
+                {
+                    datosautomaticos(registro, &num_registros);
+                }
+                else
+                {
+                    printf("REGISTROS LLENOS");
+                }
                 menu = repetir();
 
                 break;
@@ -71,25 +96,35 @@ int main()
 
             break;
         case 2:
-            eliminarregistro(registro, &num_registros);
+            matricula_a_eliminar = validarnumeros("INGRESE LA MATRICULA DEL REGISTRO PARA ELIMINAR SU REGISTRO\n", 200000, 400000);
+            encontrado = buscar2(registro, &num_registros, matricula_a_eliminar);
+            if (encontrado == 1)
+            {
+                num_matricula = validarnumeros("QUIERES ELIMINAR ESTE REGISTRO?\n1.-SI\n2.-NO\n", 1, 2);
+                if (num_matricula == 1)
+                {
+                    eliminarregistro(registro, &num_registros, matricula_a_eliminar);
+                    eliminarRegistrotexto(registro, &num_registros, archivo, matricula_a_eliminar);
+                }
+            }
             menu = repetir();
 
             break;
         case 3:
-
+            buscar(registro, &num_registros);
             menu = repetir();
 
             break;
         case 4:
-            if (num_registros < 20)
+            if (num_registros <= 500)
             {
-                ordenarinseccion(registro, &num_registros);
-                printf("ORDENADO POR METODO DE INSECCION");
+                ordenar(registro, &num_registros);
+                printf("ORDENADO POR METODO DE BURBUJA\n");
             }
             else
             {
-                ordenar(registro, &num_registros);
-                printf("ORDENADO POR METODO DE SELECCIOM");
+                ordenarQuickSort(registro, &num_registros);
+                printf("ORDENADO POR METODO QUICKSORT\n");
             }
             menu = repetir();
 
@@ -100,6 +135,7 @@ int main()
 
             break;
         case 6:
+            texto(registro, num_registros, archivo);
             menu = repetir();
 
             break;
@@ -116,9 +152,8 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
     char gener_sexo[2][10] = {"HOMBRE", "MUJER"};
     int i, j, k;
 
-    for (k = 0; k < 100; k++)
+    for (k = 0; k < 4; k++)
     {
-
         struct curp_registro *registro = &registros[*num_registros];
         char nom[15], nom2[10], AP[20], AM[20];
         int year = 0, mes = 0, dia = 0, edad = 0, numsexo = 0, matricula = 0, lugar = 0;
@@ -221,7 +256,7 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
         strcpy(sexo, genero[numsexo - 1]);
         strcpy(registro->sexo, gener_sexo[numsexo - 1]);
         // lugar
-        char estadosMexico[33][30] = {
+        char estadosMexico[33][40] = {
             "AGUASCALIENTES", "BAJA CALIFORNIA", "BAJA CALIFORNIA SUR", "CAMPECHE", "COAHUILA", "COLIMA", "CHIAPAS",
             "CHIHUAHUA", "CIUDAD DE MEXICO", "DURANGO", "GUANAJUATO", "GUERRERO", "HIDALGO", "JALISCO",
             "ESTADO DE MEXICO", "MICHOACAN", "MORELOS", "NAYARIT", "NUEVO LEON", "OAXACA", "PUEBLA",
@@ -245,6 +280,11 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
 
         strcpy(registro->CURP, curp);
         (*num_registros)++;
+        if (*num_registros > 1999)
+        {
+            printf("REGISTROS LLENOS");
+            k = 100;
+        }
     }
 }
 void pedirdatos(struct curp_registro registros[], int *num_registros)
@@ -790,25 +830,19 @@ int nacimiento(int mes, int bis)
     }
     return dia;
 }
-void eliminarregistro(struct curp_registro registros[], int *num_registros)
+void eliminarregistro(struct curp_registro registros[], int *num_registros, int matricula_a_eliminar)
 {
-    int i, j, matricula, encontrado = 0;
-    matricula = validarnumeros("INGRESE LA MATRICULA DEL REGISTRO PARA ELIMINAR SU REGISTRO\n", 0, 400000);
+    int i, j;
     for (i = 0; i <= *num_registros; i++)
     {
-        if (registros[i].Matricula == matricula)
+        if (registros[i].Matricula == matricula_a_eliminar)
         {
             for (j = i; j <= *num_registros; j++)
             {
                 registros[j] = registros[j + 1];
-                encontrado = 1;
             }
             (*num_registros)--;
         }
-    }
-    if (encontrado == 0)
-    {
-        printf("NO SE ENCONTRO MATRICULA\n");
     }
 }
 void ordenar(struct curp_registro registros[], int *num_registros)
@@ -828,28 +862,165 @@ void ordenar(struct curp_registro registros[], int *num_registros)
         }
     }
 }
-
-void ordenarinseccion(struct curp_registro registros[], int *num_registros)
+int particion(struct curp_registro registros[], int ri, int rs)
 {
+    int tem2;
     int i, j;
-    struct curp_registro temp;
 
-    for (i = 1; i < *num_registros; i++)
+    tem2 = registros[rs].Matricula;
+    i = (ri - 1);
+
+    for (j = ri; j < rs; j++)
     {
-        j = i;
-        temp = registros[i];
-
-        while (j > 0 && strcmp(registros[j - 1].Matricula, temp.Matricula) > 0)
+        if (registros[j].Matricula < tem2)
         {
-            registros[j] = registros[j - 1];
-            j--;
+            i++;
+            struct curp_registro temp = registros[i];
+            registros[i] = registros[j];
+            registros[j] = temp;
         }
+    }
 
-        registros[j] = temp;
+    struct curp_registro temp = registros[i + 1];
+    registros[i + 1] = registros[rs];
+    registros[rs] = temp;
+
+    return (i + 1);
+}
+void quicksort(struct curp_registro registros[], int ri, int rs)
+{
+    int pi;
+    if (ri < rs)
+    {
+        pi = particion(registros, ri, rs);
+
+        quicksort(registros, ri, pi - 1);
+        quicksort(registros, pi + 1, rs);
     }
 }
+void ordenarQuickSort(struct curp_registro registros[], int *num_registros)
+{
+    quicksort(registros, 0, *num_registros - 1);
+}
+void buscar(struct curp_registro registros[], int *num_registros)
+{
+    int numero_matricula, encoontrado = 0;
+    numero_matricula = validarnumeros("INRESE LA MATRICULA\n", 300000, 400000);
 
+    for (int i = 0; i < *num_registros; i++)
+    {
+        if (registros[i].Matricula == numero_matricula)
+        {
+            printf("============================\n");
+            printf("Registro %d:\n", i + 1);
+            printf("Matricula: %d\n", registros[i].Matricula);
+            printf("Nombre: %s\n", registros[i].Nombre);
+            printf("Nombre2: %s\n", registros[i].Nombre2);
+            printf("Apellido Paterno: %s\n", registros[i].ApPat);
+            printf("Apellido Materno: %s\n", registros[i].ApMat);
+            printf("Fecha de Nac: %s\n", registros[i].Fecha);
+            printf("Edad: %d\n", registros[i].Edad);
+            printf("Sexo: %s\n", registros[i].sexo);
+            printf("Lugar de Nac: %s\n", registros[i].Lugar);
+            printf("CURP: %s\n", registros[i].CURP);
+            printf("============================\n");
+            encoontrado = 1;
+        }
+    }
+    if (encoontrado == 0)
+    {
+        printf("NO SE ENCONTRO LA MATRICULA\n\n");
+    }
+}
+void texto(struct curp_registro registros[], int num_registros, FILE *fa)
+{
 
+    fa = fopen("REGISTROS.txt", "w");
+    for (int i = 0; i < num_registros; i++)
+    {
+        if (fa != NULL)
+        {
+            fprintf(fa, " ");
+        }
+    }
+    if (num_registros == 0)
+    {
+        fprintf(fa, "No hay registros para imprimir.\n");
+        fclose(fa);
+        return;
+    }
 
+    fprintf(fa, "Registros almacenados:\n");
+    fprintf(fa, "============================\n");
 
+    for (int i = 0; i < num_registros; i++)
+    {
+        fprintf(fa, "Registro %d:\n", i + 1);
+        fprintf(fa, "Matricula: %d\n", registros[i].Matricula);
+        fprintf(fa, "Nombre: %s\n", registros[i].Nombre);
+        fprintf(fa, "Nombre2: %s\n", registros[i].Nombre2);
+        fprintf(fa, "Apellido Paterno: %s\n", registros[i].ApPat);
+        fprintf(fa, "Apellido Materno: %s\n", registros[i].ApMat);
+        fprintf(fa, "Fecha de Nac: %s\n", registros[i].Fecha);
+        fprintf(fa, "Edad: %d\n", registros[i].Edad);
+        fprintf(fa, "Sexo: %s\n", registros[i].sexo);
+        fprintf(fa, "Lugar de Nac: %s\n", registros[i].Lugar);
+        fprintf(fa, "CURP: %s\n", registros[i].CURP);
+        fprintf(fa, "============================\n");
+    }
 
+    fclose(fa);
+}
+void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar)
+{
+    fa = fopen("REGISTROS.txt", "w");
+    for (int i = 0; i < *num_registros; i++)
+    {
+        if (registros[i].Matricula != matricula_a_eliminar)
+        {
+            fprintf(fa, "============================\n");
+            fprintf(fa, "Registro %d:\n", i + 1);
+            fprintf(fa, "Matricula: %d\n", registros[i].Matricula);
+            fprintf(fa, "Nombre: %s\n", registros[i].Nombre);
+            fprintf(fa, "Nombre2: %s\n", registros[i].Nombre2);
+            fprintf(fa, "Apellido Paterno: %s\n", registros[i].ApPat);
+            fprintf(fa, "Apellido Materno: %s\n", registros[i].ApMat);
+            fprintf(fa, "Fecha de Nac: %s\n", registros[i].Fecha);
+            fprintf(fa, "Edad: %d\n", registros[i].Edad);
+            fprintf(fa, "Sexo: %s\n", registros[i].sexo);
+            fprintf(fa, "Lugar de Nac: %s\n", registros[i].Lugar);
+            fprintf(fa, "CURP: %s\n", registros[i].CURP);
+            fprintf(fa, "============================\n");
+        }
+    }
+    fclose(fa);
+}
+
+int buscar2(struct curp_registro registros[], int *num_registros, int matricula)
+{
+    int i;
+
+    for (i = 0; i < *num_registros; i++)
+    {
+        if (registros[i].Matricula == matricula)
+        {
+            printf("============================\n");
+            printf("Registro %d:\n", i + 1);
+            printf("Matricula: %d\n", registros[i].Matricula);
+            printf("Nombre: %s\n", registros[i].Nombre);
+            printf("Nombre2: %s\n", registros[i].Nombre2);
+            printf("Apellido Paterno: %s\n", registros[i].ApPat);
+            printf("Apellido Materno: %s\n", registros[i].ApMat);
+            printf("Fecha de Nac: %s\n", registros[i].Fecha);
+            printf("Edad: %d\n", registros[i].Edad);
+            printf("Sexo: %s\n", registros[i].sexo);
+            printf("Lugar de Nac: %s\n", registros[i].Lugar);
+            printf("CURP: %s\n", registros[i].CURP);
+            printf("============================\n");
+            return 1;
+        }
+    }
+
+    printf("NO SE ENCONTRO LA MATRICULA\n\n");
+    return 0;
+}
