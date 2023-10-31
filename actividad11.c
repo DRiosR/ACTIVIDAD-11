@@ -8,7 +8,7 @@ M E N Ú
   a) manual (1)
  b) Automatico (100)
  c) Reegresar
-2.- Eliminar Registro
+2.- Eliminar R/egistro
 3.- Buscar
 4.- Ordenar
 5.- Imprimir
@@ -24,16 +24,16 @@ Nota: (validar si el arreglo ya está ordenado no volver ordenar por el mismo ca
 5.- Imprimir: El programa deberá imprimir los datos del arreglo (solo registros activos ) en forma de tabla en pantallas de 40 registros y presionando la tecla de continuar en cada uno de los casos.
 6.- Archivo de Texto: El programa deberá generar un archivo de texto con los datos del arreglo (solo registros activos ) formatear salida.
 NOTA: forma de registro es de la siguiente manera:
- MATRICULA : 300523
- NOMBRE  : YAREMI
- NOMBRE2   : GHIZETH
- AP PATERNO : GARCIA
- AP MATERNO : GUERRERO
- FECHA NAC : 03-04-2010
- EDAD  : 19
- SEXO      : MUJER
- LUGAR NAC : BAJA CALIFORNIA SUR
- CURP  : GAGY030410MBCRRRA5
+ MATRICULA: 300523
+ NOMBRE: YAREMI
+ NOMBRE2: GHIZETH
+ AP PATERNO: GARCIA
+ AP MATERNO: GUERRERO
+ FECHA NAC: 03-04-2010
+ EDAD: 19
+ SEXO: MUJER
+ LUGAR NAC: BAJA CALIFORNIA SUR
+ CURP: GAGY030410MBCRRRA5
 NOTA : Librería Propia, Usar funciones, no se permiten variables global
 */
 // R.R.D_act11_1_932
@@ -41,7 +41,9 @@ NOTA : Librería Propia, Usar funciones, no se permiten variables global
 #include <string.h>
 #include <ctype.h>
 #include "RRD.h"
+#include "CURP.h"
 #include <time.h>
+#include <conio.h>
 
 struct curp_registro
 {
@@ -59,17 +61,7 @@ struct curp_registro
 
 void pedirdatos(struct curp_registro registros[], int *num_registros);
 void datosautomaticos(struct curp_registro registros[], int *num_registros);
-int calcularEdad(int year, int mes, int dia);
-void quitarespacio(char palabra[]);
-void validarAP(char ApPat[]);
-void palabras_incovenientes(char cuadro1[]);
-void tresnombre(char parte2[], char ap[], char am[], char nom[]);
-int calcularHomoclave(char curp[]);
-void cambiarene(char entrada[]);
 int nacimiento(int mes, int bis);
-int Bisiesto(int year);
-int generarNumeroAleatorio(int min, int max);
-int nacimientoaleatorios(int mes, int bis);
 void eliminarregistro(struct curp_registro registros[], int *num_registros, int matricula_a_eliminar);
 void imprimir(struct curp_registro registros[], int num_registros);
 void ordenar(struct curp_registro registros[], int *num_registros);
@@ -77,8 +69,8 @@ int particion(struct curp_registro registros[], int ri, int rs);
 void quicksort(struct curp_registro registros[], int ri, int rs);
 void ordenarQuickSort(struct curp_registro registros[], int *num_registros);
 void buscar(struct curp_registro registros[], int *num_registros);
-void texto(struct curp_registro registros[], int num_registros, FILE *fa);
-void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar);
+void texto(struct curp_registro registros[], int num_registros, FILE *fa, char *nombre_archivo);
+void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar, char *nombre_archivo);
 int buscar2(struct curp_registro registros[], int *num_registros, int matricula);
 
 int main()
@@ -86,12 +78,12 @@ int main()
   srand(time(NULL));
   struct curp_registro registro[2000];
   FILE *archivo;
-  archivo = fopen("REGISTROS.txt", "a");
+  char nombre_archivo[20];
   int opc, opc2, menu, num_registros = 0;
-  int matricula_a_eliminar, num_matricula = 0, encontrado;
+  int matricula_a_eliminar, num_matricula = 0, encontrado, ordenado;
   do
   {
-    menu = 0;
+    menu = 1;
     opc = validarnumeros("\n--MENU--\n1.- Agregar\n2.- Eliminar registro\n3.- Buscar\n4.- Ordenar\n5.- Imprimir\n6.Archivo texto\n0.-salir\n", 0, 6);
     switch (opc)
     {
@@ -108,24 +100,25 @@ int main()
         if (num_registros < 1999)
         {
           pedirdatos(registro, &num_registros);
+          ordenado = 1;
         }
         else
         {
           printf("REGISTROS LLENOS");
+          getch();
         }
-        menu = repetir();
         break;
       case 2:
         if (num_registros < 1999)
         {
           datosautomaticos(registro, &num_registros);
+          ordenado = 1;
         }
         else
         {
           printf("REGISTROS LLENOS");
+          getch();
         }
-        menu = repetir();
-
         break;
       case 3:
         menu = 1;
@@ -143,40 +136,45 @@ int main()
         if (num_matricula == 1)
         {
           eliminarregistro(registro, &num_registros, matricula_a_eliminar);
-          eliminarRegistrotexto(registro, &num_registros, archivo, matricula_a_eliminar);
+          eliminarRegistrotexto(registro, &num_registros, archivo, matricula_a_eliminar, nombre_archivo);
+          ordenado = 1;
         }
       }
-      menu = repetir();
-
       break;
     case 3:
       buscar(registro, &num_registros);
-      menu = repetir();
-
       break;
     case 4:
-      if (num_registros <= 500)
+      if (ordenado == 1)
       {
-        ordenar(registro, &num_registros);
-        printf("ORDENADO POR METODO DE BURBUJA\n");
+        if (num_registros <= 500)
+        {
+          ordenar(registro, &num_registros);
+          printf("ORDENADO POR METODO DE BURBUJA\n");
+        }
+        else
+        {
+          ordenarQuickSort(registro, &num_registros);
+          printf("ORDENADO POR METODO QUICKSORT\n");
+        }
+        ordenado = 0;
       }
       else
       {
-        ordenarQuickSort(registro, &num_registros);
-        printf("ORDENADO POR METODO QUICKSORT\n");
+        printf("YA ESTA ORDENADO\n");
+        getch();
       }
-      menu = repetir();
-
       break;
     case 5:
       imprimir(registro, num_registros);
-      menu = repetir();
-
       break;
     case 6:
-      texto(registro, num_registros, archivo);
-      menu = repetir();
+      printf("INGRESE EL NOMBRE DEL ARCHIVO\n");
+      gets(nombre_archivo);
+      strcat(nombre_archivo, ".txt");
+      archivo = fopen(nombre_archivo, "a");
 
+      texto(registro, num_registros, archivo, nombre_archivo);
       break;
     }
 
@@ -202,7 +200,7 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
     int dosfinales, bis, validadorint, numero_nombre2;
 
     // matricula
-    matricula = numerorandom(300000, 400000);
+    matricula = numerorandom(200000, 400000);
     registro->Matricula = matricula;
     // nombres y apellidos
     numsexo = generarNumeroAleatorio(1, 2);
@@ -338,7 +336,7 @@ void pedirdatos(struct curp_registro registros[], int *num_registros)
   int num, dosfinales, bis, validadorint;
 
   // matricula
-  matricula = validarnumeros("INGRESE SU MATRICULA\n", 100000, 400000);
+  matricula = validarnumeros("INGRESE SU MATRICULA\n", 200000, 400000);
   registro->Matricula = matricula;
   // nombres y apellidos
   validarletras("ESCRIBA SU NOMBRE: ", nom);
@@ -391,7 +389,7 @@ void pedirdatos(struct curp_registro registros[], int *num_registros)
 
   palabras_incovenientes(cuadro1);
   // fecha
-  year = validarnumeros("INGRESE SU AÑO DE NACIMIENTO\n", 0, 2023);
+  year = validarnumeros("INGRESE SU AÑO DE NACIMIENTO\n", 1900, 2023);
   bis = Bisiesto(year);
   dosfinales = year % 100;
   mes = validarnumeros("INGRESE SU MES DE NACIMIENTO\n", 0, 12);
@@ -458,151 +456,7 @@ void pedirdatos(struct curp_registro registros[], int *num_registros)
   strcpy(registro->CURP, curp);
   (*num_registros)++;
 }
-int calcularEdad(int year, int mes, int dia)
-{
-  struct tm fecha_actual;
-  time_t tiempo_actual;
 
-  tiempo_actual = time(NULL);
-  fecha_actual = *localtime(&tiempo_actual);
-
-  int year2 = fecha_actual.tm_year + 1900;
-  int month = fecha_actual.tm_mon + 1;
-  int day = fecha_actual.tm_mday;
-
-  if (mes < month || (mes == month && dia <= day))
-  {
-    return year2 - year;
-  }
-  else
-  {
-    return year2 - year - 1;
-  }
-}
-void quitarespacio(char palabra[])
-{
-  char *Apsinespacio = strrchr(palabra, ' ');
-
-  if (Apsinespacio != NULL)
-  {
-    strcpy(palabra, Apsinespacio + 1);
-  }
-}
-void validarAP(char ApPat[])
-{
-  int len, i;
-  len = strlen(ApPat);
-  for (i = 0; i < len - 1; i++)
-  {
-
-    if (ApPat[i] == 'F' && ApPat[i + 1] == 'A')
-    {
-      ApPat[i + 1] = 'X';
-    }
-    if (ApPat[i] == 'P' && ApPat[i + 1] == 'U')
-    {
-      ApPat[i + 1] = 'X';
-    }
-    if (ApPat[i] == 'J' && ApPat[i + 1] == 'O')
-    {
-      ApPat[i + 1] = 'X';
-    }
-  }
-}
-void palabras_incovenientes(char cuadro1[])
-{
-  int i, encontrado = 0, lugar = -1;
-
-  char palabrasInconvenientes[77][10] = {
-      "BACA", "BAKA", "BUEI", "BUEY", "CACA", "CACO", "CAGA", "CAGO", "CAKA", "CAKO", "COGE", "COGI",
-      "COJA", "COJE", "COJI", "COJO", "COLA", "CULO", "FALO", "FETO", "GETA", "GUEI", "GUEY", "JETA",
-      "JOTO", "KACA", "KACO", "KAGA", "KAGO", "KAKA", "KAKO", "KOGE", "KOGI", "KOJA", "KOJE", "KOJI",
-      "KOJO", "KOLA", "KULO", "LOCA", "MAME", "MAMO", "MEAR", "MEAS", "MEON", "MIAR", "MION", "MOCO",
-      "MOKO", "MULA", "MULO", "NACA", "NACO", "PEDA", "PEDO", "PENE", "PIPI", "PITO", "POPO", "PUTA",
-      "PUTO", "QULO", "RATA", "ROBA", "ROBE", "ROBO", "RUIN", "SENO", "TETA", "VACA", "VAGA", "VAGO",
-      "VAKA", "VUEI", "VUEY", "WUEI", "WUEY"};
-
-  char palabrasArregladas[77][10] = {
-      "BXCA", "BXKA", "BXEI", "BXEY", "CXCA", "CXCO", "CXGA", "CXGO", "CXKA", "CXKO", "CXGE", "CXGI",
-      "CXJA", "CXJE", "CXJI", "CXJO", "CXLA", "CXLO", "FXLO", "FXTO", "GXTA", "GXEI", "GXEY", "JXTA",
-      "JXTO", "KXCA", "KXCO", "KXGA", "KXGO", "KXKA", "KXKO", "KXGE", "KXGI", "KXJA", "KXJE", "KXJI",
-      "KXJO", "KXLA", "KXLO", "LXCA", "MXME", "MXMO", "MXAR", "MXAS", "MXON", "MXAR", "MXON", "MXCO",
-      "MXKO", "MXLA", "MXLO", "NXCA", "NXCO", "PXDA", "PXDO", "PXNE", "PXPI", "PXTO", "PXPO", "PXTA",
-      "PXTO", "QXLO", "RXTA", "RXBA", "RXBE", "RXBO", "RXIN", "SXNO", "TXTA", "VXCA", "VXGA", "VXGO",
-      "VXKA", "VXEI", "VXEY", "WXEI", "WXEY"};
-
-  for (i = 0; i < 77; i++)
-  {
-    if (strcmp(cuadro1, palabrasInconvenientes[i]) == 0)
-    {
-      encontrado = 1;
-      lugar = i;
-      i = 77;
-    }
-  }
-  if (encontrado == 1)
-  {
-    strcpy(cuadro1, palabrasArregladas[lugar]);
-  }
-}
-void tresnombre(char parte2[], char ap[], char am[], char nom[])
-{
-  int enco = 0;
-  char Ap = '1', Am = '0', Nom = '0';
-  for (int i = 0; ap[i] != '\0'; i++)
-  {
-    if (ap[0] == 'X')
-    {
-      Ap = ap[0];
-      enco = 1;
-      break;
-    }
-  }
-  if (enco == 0)
-  {
-    for (int i = 1; ap[i] != '\0'; i++)
-    {
-      if (ap[i] != 'A' && ap[i] != 'E' && ap[i] != 'I' && ap[i] != 'O' && ap[i] != 'U')
-      {
-        Ap = ap[i];
-        break;
-      }
-    }
-  }
-  enco = 0;
-  for (int i = 0; am[i] != '\0'; i++)
-  {
-    if (am[0] == 'X')
-    {
-      Am = am[0];
-      enco = 1;
-      break;
-    }
-  }
-  if (enco == 0)
-  {
-    for (int i = 1; am[i] != '\0'; i++)
-    {
-      if (am[i] != 'A' && am[i] != 'E' && am[i] != 'I' && am[i] != 'O' && am[i] != 'U')
-      {
-
-        Am = am[i];
-        break;
-      }
-    }
-  }
-
-  for (int i = 1; nom[i] != '\0'; i++)
-  {
-    if (nom[i] != 'A' && nom[i] != 'E' && nom[i] != 'I' && nom[i] != 'O' && nom[i] != 'U')
-    {
-      Nom = nom[i];
-      break;
-    }
-  }
-
-  sprintf(parte2, "%c%c%c", Ap, Am, Nom);
-}
 void imprimir(struct curp_registro registros[], int num_registros)
 {
   int i, acu = 1;
@@ -613,22 +467,15 @@ void imprimir(struct curp_registro registros[], int num_registros)
   }
 
   printf("Registros almacenados:\n");
-  printf("============================\n");
+  printf("========================================================================================================================================================================\n");
+  printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+  printf("========================================================================================================================================================================\n");
 
   for (i = 0; i < num_registros; i++)
   {
-    printf("Registro %d:\n", i + 1);
-    printf("Matricula: %d\n", registros[i].Matricula);
-    printf("Nombre: %s\n", registros[i].Nombre);
-    printf("Nombre2: %s\n", registros[i].Nombre2);
-    printf("Apellido Paterno: %s\n", registros[i].ApPat);
-    printf("Apellido Materno: %s\n", registros[i].ApMat);
-    printf("Fecha de Nac: %s\n", registros[i].Fecha);
-    printf("Edad: %d\n", registros[i].Edad);
-    printf("Sexo: %s\n", registros[i].sexo);
-    printf("Lugar de Nac: %s\n", registros[i].Lugar);
-    printf("CURP: %s\n", registros[i].CURP);
-    printf("============================\n");
+    printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+    printf("========================================================================================================================================================================\n");
+
     if (acu == 40)
     {
       getch();
@@ -637,236 +484,21 @@ void imprimir(struct curp_registro registros[], int num_registros)
     acu++;
   }
 }
-int calcularHomoclave(char curp[])
-{
-  int i;
-  int nom, ap1, ap2, am, sexo;
-  int year1, year2, mes1, mes2, dia1, dia2;
-  int esta1, esta2, ap3, am2, nom2, siglo;
-  int suma;
-  char equivalenciaLetras[] = "0123456789ABCDEFGHIJKLMN OPQRSTUVWXYZ";
-  for (i = 0; equivalenciaLetras[i] != '\0'; i++)
-  {
-    if (curp[0] == equivalenciaLetras[i])
-    {
-      ap1 = i;
-    }
-    if (curp[1] == equivalenciaLetras[i])
-    {
-      ap2 = i;
-    }
-    if (curp[2] == equivalenciaLetras[i])
-    {
-      am = i;
-    }
-    if (curp[3] == equivalenciaLetras[i])
-    {
-      nom = i;
-    }
-    if (curp[4] == equivalenciaLetras[i])
-    {
-      year1 = i;
-    }
-    if (curp[5] == equivalenciaLetras[i])
-    {
-      year2 = i;
-    }
-    if (curp[6] == equivalenciaLetras[i])
-    {
-      mes1 = i;
-    }
-    if (curp[7] == equivalenciaLetras[i])
-    {
-      mes2 = i;
-    }
-    if (curp[8] == equivalenciaLetras[i])
-    {
-      dia1 = i;
-    }
-    if (curp[9] == equivalenciaLetras[i])
-    {
-      dia2 = i;
-    }
-    if (curp[10] == equivalenciaLetras[i])
-    {
-      sexo = i;
-    }
-    if (curp[11] == equivalenciaLetras[i])
-    {
-      esta1 = i;
-    }
-    if (curp[12] == equivalenciaLetras[i])
-    {
-      esta2 = i;
-    }
-    if (curp[13] == equivalenciaLetras[i])
-    {
-      ap3 = i;
-    }
-    if (curp[14] == equivalenciaLetras[i])
-    {
-      am2 = i;
-    }
-    if (curp[15] == equivalenciaLetras[i])
-    {
-      nom2 = i;
-    }
-    if (curp[16] == equivalenciaLetras[i])
-    {
-      siglo = i;
-    }
-  }
 
-  suma = ((ap1 * 18) + (ap2 * 17) + (am * 16) + (nom * 15) + (year1 * 14) + (year2 * 13) + (mes1 * 12) + (mes2 * 11) + (dia1 * 10) + (dia2 * 9) + (sexo * 8) + (esta1 * 7) + (esta2 * 6) + (ap3 * 5) + (am2 * 4) + (nom2 * 3) + (siglo * 2)) % 10;
-  if (suma != 0)
-  {
-    suma = 10 - suma;
-  }
-  return suma;
-}
-void cambiarene(char entrada[])
-{
-  for (int i = 0; entrada[i] != '\0'; i++)
-  {
-    if (!(isalnum(entrada[i]) || isalpha(entrada[i])))
-    {
-      entrada[i] = 'X';
-    }
-  }
-}
-int Bisiesto(int year)
-{
-  if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
-  {
-    return 1;
-  }
-  else
-  {
-    return 0;
-  }
-}
-int nacimientoaleatorios(int mes, int bis)
-{
-  int dia;
-  switch (mes)
-  {
-  case 1:
-    dia = generarNumeroAleatorio(1, 31);
-    break;
-  case 2:
-    if (bis == 1)
-    {
-      dia = generarNumeroAleatorio(1, 29);
-    }
-    else
-    {
-      dia = generarNumeroAleatorio(1, 28);
-    }
-    break;
-  case 3:
-    dia = generarNumeroAleatorio(1, 31);
-
-    break;
-  case 4:
-    dia = generarNumeroAleatorio(1, 30);
-
-    break;
-  case 5:
-    dia = generarNumeroAleatorio(1, 31);
-
-    break;
-  case 6:
-    dia = generarNumeroAleatorio(1, 30);
-
-    break;
-  case 7:
-    dia = generarNumeroAleatorio(1, 31);
-
-    break;
-  case 8:
-    dia = generarNumeroAleatorio(1, 30);
-
-    break;
-  case 9:
-    dia = generarNumeroAleatorio(1, 30);
-
-    break;
-  case 10:
-    dia = generarNumeroAleatorio(1, 31);
-
-    break;
-  case 11:
-    dia = generarNumeroAleatorio(1, 31);
-
-    break;
-  case 12:
-    dia = generarNumeroAleatorio(1, 31);
-    break;
-  }
-  return dia;
-}
-int generarNumeroAleatorio(int min, int max)
-{
-  return rand() % (max - min + 1) + min;
-}
 int nacimiento(int mes, int bis)
 {
-  int dia;
-  switch (mes)
+  int m, dia;
+  int day[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  m = day[mes];
+  if (bis == 1 && mes == 3)
   {
-  case 1:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-    break;
-  case 2:
-    if (bis == 1)
-    {
-      dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 29);
-    }
-    else
-    {
-      dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 28);
-    }
-    break;
-  case 3:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-
-    break;
-  case 4:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 30);
-
-    break;
-  case 5:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-
-    break;
-  case 6:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 30);
-
-    break;
-  case 7:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-
-    break;
-  case 8:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-
-    break;
-  case 9:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 30);
-
-    break;
-  case 10:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-
-    break;
-  case 11:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 30);
-
-    break;
-  case 12:
-    dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, 31);
-    break;
+    m = 29;
   }
+  if (bis == 0 && mes == 3)
+  {
+    m = 28;
+  }
+  dia = validarnumeros("INGRESE SU DIA DE NACIMIENTO\n", 1, m);
   return dia;
 }
 void eliminarregistro(struct curp_registro registros[], int *num_registros, int matricula_a_eliminar)
@@ -945,24 +577,18 @@ void buscar(struct curp_registro registros[], int *num_registros)
 {
   int numero_matricula, encoontrado = 0;
   numero_matricula = validarnumeros("INRESE LA MATRICULA\n", 300000, 400000);
+  printf("Registros almacenados:\n");
+  printf("========================================================================================================================================================================\n");
+  printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+  printf("========================================================================================================================================================================\n");
 
   for (int i = 0; i < *num_registros; i++)
   {
     if (registros[i].Matricula == numero_matricula)
     {
-      printf("============================\n");
-      printf("Registro %d:\n", i + 1);
-      printf("Matricula: %d\n", registros[i].Matricula);
-      printf("Nombre: %s\n", registros[i].Nombre);
-      printf("Nombre2: %s\n", registros[i].Nombre2);
-      printf("Apellido Paterno: %s\n", registros[i].ApPat);
-      printf("Apellido Materno: %s\n", registros[i].ApMat);
-      printf("Fecha de Nac: %s\n", registros[i].Fecha);
-      printf("Edad: %d\n", registros[i].Edad);
-      printf("Sexo: %s\n", registros[i].sexo);
-      printf("Lugar de Nac: %s\n", registros[i].Lugar);
-      printf("CURP: %s\n", registros[i].CURP);
-      printf("============================\n");
+      printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+      printf("========================================================================================================================================================================\n");
+
       encoontrado = 1;
     }
   }
@@ -971,10 +597,10 @@ void buscar(struct curp_registro registros[], int *num_registros)
     printf("NO SE ENCONTRO LA MATRICULA\n\n");
   }
 }
-void texto(struct curp_registro registros[], int num_registros, FILE *fa)
+void texto(struct curp_registro registros[], int num_registros, FILE *fa, char *nombre_archivo)
 {
 
-  fa = fopen("REGISTROS.txt", "w");
+  fa = fopen(nombre_archivo, "w");
   for (int i = 0; i < num_registros; i++)
   {
     if (fa != NULL)
@@ -989,73 +615,52 @@ void texto(struct curp_registro registros[], int num_registros, FILE *fa)
     return;
   }
 
-  fprintf(fa, "Registros almacenados:\n");
-  fprintf(fa, "============================\n");
+  fprintf(fa, "\nRegistros almacenados:\n");
+  fprintf(fa, "========================================================================================================================================================================\n");
+  fprintf(fa, "|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+  fprintf(fa, "========================================================================================================================================================================\n");
 
   for (int i = 0; i < num_registros; i++)
   {
-    fprintf(fa, "Registro %d:\n", i + 1);
-    fprintf(fa, "Matricula: %d\n", registros[i].Matricula);
-    fprintf(fa, "Nombre: %s\n", registros[i].Nombre);
-    fprintf(fa, "Nombre2: %s\n", registros[i].Nombre2);
-    fprintf(fa, "Apellido Paterno: %s\n", registros[i].ApPat);
-    fprintf(fa, "Apellido Materno: %s\n", registros[i].ApMat);
-    fprintf(fa, "Fecha de Nac: %s\n", registros[i].Fecha);
-    fprintf(fa, "Edad: %d\n", registros[i].Edad);
-    fprintf(fa, "Sexo: %s\n", registros[i].sexo);
-    fprintf(fa, "Lugar de Nac: %s\n", registros[i].Lugar);
-    fprintf(fa, "CURP: %s\n", registros[i].CURP);
-    fprintf(fa, "============================\n");
+    fprintf(fa, "| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+    fprintf(fa, "========================================================================================================================================================================\n");
   }
 
   fclose(fa);
 }
-void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar)
+void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar, char *nombre_archivo)
 {
-  fa = fopen("REGISTROS.txt", "w");
+  fa = fopen(nombre_archivo, "w");
+  fprintf(fa, "\nRegistros almacenados:\n");
+  fprintf(fa, "========================================================================================================================================================================\n");
+  fprintf(fa, "|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+  fprintf(fa, "========================================================================================================================================================================\n");
+
   for (int i = 0; i < *num_registros; i++)
   {
     if (registros[i].Matricula != matricula_a_eliminar)
     {
-      fprintf(fa, "============================\n");
-      fprintf(fa, "Registro %d:\n", i + 1);
-      fprintf(fa, "Matricula: %d\n", registros[i].Matricula);
-      fprintf(fa, "Nombre: %s\n", registros[i].Nombre);
-      fprintf(fa, "Nombre2: %s\n", registros[i].Nombre2);
-      fprintf(fa, "Apellido Paterno: %s\n", registros[i].ApPat);
-      fprintf(fa, "Apellido Materno: %s\n", registros[i].ApMat);
-      fprintf(fa, "Fecha de Nac: %s\n", registros[i].Fecha);
-      fprintf(fa, "Edad: %d\n", registros[i].Edad);
-      fprintf(fa, "Sexo: %s\n", registros[i].sexo);
-      fprintf(fa, "Lugar de Nac: %s\n", registros[i].Lugar);
-      fprintf(fa, "CURP: %s\n", registros[i].CURP);
-      fprintf(fa, "============================\n");
+      fprintf(fa, "| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+      fprintf(fa, "========================================================================================================================================================================\n");
     }
   }
   fclose(fa);
 }
-
 int buscar2(struct curp_registro registros[], int *num_registros, int matricula)
 {
   int i;
+  printf("\nRegistros almacenados:\n");
+  printf("========================================================================================================================================================================\n");
+  printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+  printf("========================================================================================================================================================================\n");
 
   for (i = 0; i < *num_registros; i++)
   {
     if (registros[i].Matricula == matricula)
     {
-      printf("============================\n");
-      printf("Registro %d:\n", i + 1);
-      printf("Matricula: %d\n", registros[i].Matricula);
-      printf("Nombre: %s\n", registros[i].Nombre);
-      printf("Nombre2: %s\n", registros[i].Nombre2);
-      printf("Apellido Paterno: %s\n", registros[i].ApPat);
-      printf("Apellido Materno: %s\n", registros[i].ApMat);
-      printf("Fecha de Nac: %s\n", registros[i].Fecha);
-      printf("Edad: %d\n", registros[i].Edad);
-      printf("Sexo: %s\n", registros[i].sexo);
-      printf("Lugar de Nac: %s\n", registros[i].Lugar);
-      printf("CURP: %s\n", registros[i].CURP);
-      printf("============================\n");
+      printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+      printf("========================================================================================================================================================================\n");
+
       return 1;
     }
   }
