@@ -251,7 +251,7 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
   char gener_sexo[2][10] = {"HOMBRE", "MUJER"};
   int i, j, k;
 
-  for (k = 0; k < 4; k++)
+  for (k = 0; k < 100; k++)
   {
     struct curp_registro *registro = &registros[*num_registros];
     char nom[15], nom2[10], AP[20], AM[20];
