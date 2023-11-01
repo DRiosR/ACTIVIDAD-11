@@ -550,16 +550,16 @@ void imprimir(struct curp_registro registros[], int num_registros)
 void imprimirELIMINADOS(struct curp_registro registros[], int num_registros)
 {
   int i, acu = 1;
-  int dadoDbaja = 0;
+  int dadoDbaja = 2;
   for (i = 0; i <= num_registros; i++)
   {
-    if (registros[i].Status == 0)
+    if (registros[i].Status == 2)
     {
       dadoDbaja = 1;
     }
   }
 
-  if (dadoDbaja == 0)
+  if (dadoDbaja == 1)
   {
     printf("Registros almacenados:\n");
     printf("========================================================================================================================================================================\n");
@@ -568,7 +568,7 @@ void imprimirELIMINADOS(struct curp_registro registros[], int num_registros)
 
     for (i = 0; i <= num_registros; i++)
     {
-      if (registros[i].Status == 0)
+      if (registros[i].Status == 2)
       {
 
         printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
@@ -583,7 +583,7 @@ void imprimirELIMINADOS(struct curp_registro registros[], int num_registros)
       }
     }
   }
-  else
+  if(dadoDbaja==2)
   {
     printf("No hay registros dados de baja\n");
   }
@@ -611,9 +611,9 @@ void eliminarregistro(struct curp_registro registros[], int *num_registros, int 
   {
     if (registros[i].Matricula == matricula_a_eliminar)
     {
-      if (registros->Status == 1)
+      if (registros[i].Status == 1)
       {
-        registros[i].Status = 0;
+        registros[i].Status = 2;
         printf("REGISTRO DADO DE BAJA\n");
 
         (*num_registros)--;
@@ -786,7 +786,7 @@ void dar_de_alta_registro(struct curp_registro registros[], int *num_registros, 
   {
     if (registros[i].Matricula == matricula_de_alta)
     {
-      if (registros[i].Status == 0)
+      if (registros[i].Status == 2)
       {
         registros[i].Status = 1;
         printf("REGISTRO DADO DE ALTA\n");
