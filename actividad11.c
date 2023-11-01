@@ -57,6 +57,7 @@ struct curp_registro
   char Fecha[11];
   int Edad;
   char sexo[10];
+  int Status;
 };
 
 void pedirdatos(struct curp_registro registros[], int *num_registros);
@@ -64,6 +65,7 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros);
 int nacimiento(int mes, int bis);
 void eliminarregistro(struct curp_registro registros[], int *num_registros, int matricula_a_eliminar);
 void imprimir(struct curp_registro registros[], int num_registros);
+void imprimirELIMINADOS(struct curp_registro registros[], int num_registros);
 void ordenar(struct curp_registro registros[], int *num_registros);
 int particion(struct curp_registro registros[], int ri, int rs);
 void quicksort(struct curp_registro registros[], int ri, int rs);
@@ -72,6 +74,8 @@ void buscar(struct curp_registro registros[], int *num_registros);
 void texto(struct curp_registro registros[], int num_registros, FILE *fa, char *nombre_archivo);
 void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_a_eliminar, char *nombre_archivo);
 int buscar2(struct curp_registro registros[], int *num_registros, int matricula);
+void dar_de_alta_registro(struct curp_registro registros[], int *num_registros, int matricula_de_alta);
+void agregarRegistroTexto(struct curp_registro registros[], int *num_registros, FILE *fa, int matricula_de_alta, char *nombre_archivo);
 
 int main()
 {
@@ -79,8 +83,8 @@ int main()
   struct curp_registro registro[2000];
   FILE *archivo;
   char nombre_archivo[20];
-  int opc, opc2, menu, num_registros = 0;
-  int matricula_a_eliminar, num_matricula = 0, encontrado, ordenado;
+  int opc, opc2, opc3, opc4, menu, num_registros = 0;
+  int matricula_a_eliminar, matricula_de_alta, num_matricula = 0, encontrado, ordenado;
   do
   {
     menu = 1;
@@ -128,19 +132,52 @@ int main()
 
       break;
     case 2:
-      matricula_a_eliminar = validarnumeros("INGRESE LA MATRICULA DEL REGISTRO PARA ELIMINAR SU REGISTRO\n", 200000, 400000);
-      encontrado = buscar2(registro, &num_registros, matricula_a_eliminar);
-      if (encontrado == 1)
+      if (num_registros > 0)
       {
-        num_matricula = validarnumeros("QUIERES ELIMINAR ESTE REGISTRO?\n1.-SI\n2.-NO\n", 1, 2);
-        if (num_matricula == 1)
+        opc3 = validarnumeros("\n--MENU--\n1.- DAR DE BAJA (1)\n2.- DAR DE ALTA (100)\n3.-REGRESAR\n", 1, 3);
+        switch (opc3)
         {
-          eliminarregistro(registro, &num_registros, matricula_a_eliminar);
-          eliminarRegistrotexto(registro, &num_registros, archivo, matricula_a_eliminar, nombre_archivo);
-          ordenado = 1;
+        case 1:
+          matricula_a_eliminar = validarnumeros("INGRESE LA MATRICULA DEL REGISTRO PARA ELIMINAR SU REGISTRO\n", 200000, 400000);
+          encontrado = buscar2(registro, &num_registros, matricula_a_eliminar);
+          if (encontrado == 1)
+          {
+            num_matricula = validarnumeros("QUIERES ELIMINAR ESTE REGISTRO?\n1.-SI\n2.-NO\n", 1, 2);
+            if (num_matricula == 1)
+            {
+              eliminarregistro(registro, &num_registros, matricula_a_eliminar);
+              eliminarRegistrotexto(registro, &num_registros, archivo, matricula_a_eliminar, nombre_archivo);
+              ordenado = 1;
+            }
+          }
+          break;
+        case 2:
+          matricula_de_alta = validarnumeros("INGRESE LA MATRICULA DEL REGISTRO PARA DAR DE ALTA SU REGISTRO\n", 200000, 400000);
+          encontrado = buscar2(registro, &num_registros, matricula_a_eliminar);
+          if (encontrado == 1)
+          {
+            num_matricula = validarnumeros("QUIERES DAR DE ALTA ESTE REGISTRO?\n1.-SI\n2.-NO\n", 1, 2);
+            if (num_matricula == 1)
+            {
+              dar_de_alta_registro(registro, &num_registros, matricula_de_alta);
+              eliminarRegistrotexto(registro, &num_registros, archivo, matricula_a_eliminar, nombre_archivo);
+
+              ordenado = 1;
+            }
+          }
+          break;
+        case 3:
+          menu = 1;
+
+          break;
         }
       }
+      else
+      {
+        printf("No hay registros para eliminar\n");
+      }
       break;
+
     case 3:
       buscar(registro, &num_registros);
       break;
@@ -166,8 +203,33 @@ int main()
       }
       break;
     case 5:
-      imprimir(registro, num_registros);
+      if (num_registros > 0)
+      {
+
+        opc4 = validarnumeros("\n--MENU--\n1.-REGISTROS DE ALTA (1)\n2.-REGISTROS DADOS DE BAJA (100)\n3.-REGRESAR\n", 1, 3);
+        switch (opc4)
+        {
+        case 1:
+          imprimir(registro, num_registros);
+
+          break;
+
+        case 2:
+          imprimirELIMINADOS(registro, num_registros);
+
+          break;
+
+        case 3:
+          menu = 1;
+          break;
+        }
+      }
+      else
+      {
+        printf("No hay registros para imprimir.\n");
+      }
       break;
+
     case 6:
       printf("INGRESE EL NOMBRE DEL ARCHIVO\n");
       gets(nombre_archivo);
@@ -189,7 +251,7 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
   char gener_sexo[2][10] = {"HOMBRE", "MUJER"};
   int i, j, k;
 
-  for (k = 0; k < 100; k++)
+  for (k = 0; k < 4; k++)
   {
     struct curp_registro *registro = &registros[*num_registros];
     char nom[15], nom2[10], AP[20], AM[20];
@@ -317,6 +379,8 @@ void datosautomaticos(struct curp_registro registros[], int *num_registros)
 
     strcpy(registro->CURP, curp);
     (*num_registros)++;
+    // status
+    registro->Status = 1;
     if (*num_registros > 1999)
     {
       printf("REGISTROS LLENOS");
@@ -415,22 +479,21 @@ void pedirdatos(struct curp_registro registros[], int *num_registros)
   strcpy(sexo, genero[numsexo - 1]);
   strcpy(registro->sexo, gener_sexo[numsexo - 1]);
   // lugar
-  printf("+--------+---------------------+--------+--------------------+--------+--------------------+\n");
-  printf("| Numero |      Estado         | Numero |      Estado        | Numero |      Estado        |\n");
-  printf("+--------+---------------------+--------+--------------------+--------+--------------------+\n");
-  printf("|   1    | AGUASCALIENTES      |   12   | GUANAJUATO         |   23   | QUERETARO          |\n");
-  printf("|   2    | BAJA CALIFORNIA     |   13   | GUERRERO           |   24   | QUINTANA ROO       |\n");
-  printf("|   3    | BAJA CALIFORNIA SUR |   14   | HIDALGO            |   25   | SAN LUIS POTOSI    |\n");
-  printf("|   4    | CAMPECHE            |   15   | JALISCO            |   26   | SINALOA            |\n");
-  printf("|   5    | CHIAPAS             |   16   | MEXICO             |   27   | SONORA             |\n");
-  printf("|   6    | CHIHUAHUA           |   17   | MICHOACAN          |   28   | TABASCO            |\n");
-  printf("|   7    | COAHUILA            |   18   | MORELOS            |   29   | TAMAULIPAS         |\n");
-  printf("|   8    | COLIMA              |   19   | NAYARIT            |   30   | TLAXCALA           |\n");
-  printf("|   9    | CIUDAD DE MEXICO    |   20   | NUEVO LEON         |   31   | VERACRUZ           |\n");
-  printf("|  10    | DURANGO             |   21   | OAXACA             |   32   | YUCATAN            |\n");
-  printf("|  11    | GUANAJUATO          |   22   | PUEBLA             |   33   | ZACATECAS          |\n");
-  printf("|  33    | NACIDO EN EL EXTRA  |   0    |                    |   0    |                    |\n");
-  printf("+--------+---------------------+--------+--------------------+--------+--------------------+\n");
+  printf("+--------+---------------------+--------+---------------------+--------+---------------------+\n");
+  printf("| Numero |      Estado         | Numero |      Estado         | Numero |      Estado         |\n");
+  printf("+--------+---------------------+--------+---------------------+--------+---------------------+\n");
+  printf("|   1    | AGUASCALIENTES      |   12   | GUERRERO            |   23   | QUINTANA ROO        |\n");
+  printf("|   2    | BAJA CALIFORNIA     |   13   | HIDALGO             |   24   | SAN LUIS POTOSI     |\n");
+  printf("|   3    | BAJA CALIFORNIA SUR |   14   | JALISCO             |   25   | SINALOA             |\n");
+  printf("|   4    | CAMPECHE            |   15   | MEXICO              |   26   | SONORA              |\n");
+  printf("|   5    | CHIAPAS             |   16   | MICHOACAN           |   27   | TABASCO             |\n");
+  printf("|   6    | CHIHUAHUA           |   17   | MORELOS             |   28   | TAMAULIPAS          |\n");
+  printf("|   7    | COAHUILA            |   18   | NAYARIT             |   29   | TLAXCALA            |\n");
+  printf("|   8    | COLIMA              |   19   | NUEVO LEON          |   30   | VERACRUZ            |\n");
+  printf("|   9    | CIUDAD DE MEXICO    |   20   | OAXACA              |   31   | YUCATAN             |\n");
+  printf("|  10    | DURANGO             |   21   | PUEBLA              |   32   | ZACATECAS           |\n");
+  printf("|  11    | GUANAJUATO          |   22   | QUERETARO           |   33   | NACIDO EN EL EXTRA  |\n");
+  printf("+--------+---------------------+--------+---------------------+--------+---------------------+\n");
   char estadosMexico[33][30] = {
       "AGUASCALIENTES", "BAJA CALIFORNIA", "BAJA CALIFORNIA SUR", "CAMPECHE", "COAHUILA", "COLIMA", "CHIAPAS",
       "CHIHUAHUA", "CIUDAD DE MEXICO", "DURANGO", "GUANAJUATO", "GUERRERO", "HIDALGO", "JALISCO",
@@ -454,37 +517,77 @@ void pedirdatos(struct curp_registro registros[], int *num_registros)
   strcpy(registro->CURP, curp);
 
   strcpy(registro->CURP, curp);
+  // status
+  registro->Status = 1;
+
   (*num_registros)++;
 }
 
 void imprimir(struct curp_registro registros[], int num_registros)
 {
   int i, acu = 1;
-  if (num_registros == 0)
-  {
-    printf("No hay registros para imprimir.\n");
-    return;
-  }
-
   printf("Registros almacenados:\n");
   printf("========================================================================================================================================================================\n");
   printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
   printf("========================================================================================================================================================================\n");
 
-  for (i = 0; i < num_registros; i++)
+  for (i = 0; i <= num_registros; i++)
   {
-    printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
-    printf("========================================================================================================================================================================\n");
-
-    if (acu == 40)
+    if (registros[i].Status == 1)
     {
-      getch();
-      acu = 0;
+      printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+      printf("========================================================================================================================================================================\n");
+
+      if (acu == 40)
+      {
+        getch();
+        acu = 0;
+      }
+      acu++;
     }
-    acu++;
   }
 }
+void imprimirELIMINADOS(struct curp_registro registros[], int num_registros)
+{
+  int i, acu = 1;
+  int dadoDbaja = 0;
+  for (i = 0; i <= num_registros; i++)
+  {
+    if (registros[i].Status == 0)
+    {
+      dadoDbaja = 1;
+    }
+  }
 
+  if (dadoDbaja == 0)
+  {
+    printf("Registros almacenados:\n");
+    printf("========================================================================================================================================================================\n");
+    printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+    printf("========================================================================================================================================================================\n");
+
+    for (i = 0; i <= num_registros; i++)
+    {
+      if (registros[i].Status == 0)
+      {
+
+        printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
+        printf("========================================================================================================================================================================\n");
+        dadoDbaja = 1;
+        if (acu == 40)
+        {
+          getch();
+          acu = 0;
+        }
+        acu++;
+      }
+    }
+  }
+  else
+  {
+    printf("No hay registros dados de baja\n");
+  }
+}
 int nacimiento(int mes, int bis)
 {
   int m, dia;
@@ -503,16 +606,22 @@ int nacimiento(int mes, int bis)
 }
 void eliminarregistro(struct curp_registro registros[], int *num_registros, int matricula_a_eliminar)
 {
-  int i, j;
+  int i;
   for (i = 0; i <= *num_registros; i++)
   {
     if (registros[i].Matricula == matricula_a_eliminar)
     {
-      for (j = i; j <= *num_registros; j++)
+      if (registros->Status == 1)
       {
-        registros[j] = registros[j + 1];
+        registros[i].Status = 0;
+        printf("REGISTRO DADO DE BAJA\n");
+
+        (*num_registros)--;
       }
-      (*num_registros)--;
+      else
+      {
+        printf("EL REGSITRO YA ESTA DADO DE BAJA");
+      }
     }
   }
 }
@@ -577,15 +686,16 @@ void buscar(struct curp_registro registros[], int *num_registros)
 {
   int numero_matricula, encoontrado = 0;
   numero_matricula = validarnumeros("INRESE LA MATRICULA\n", 300000, 400000);
-  printf("Registros almacenados:\n");
-  printf("========================================================================================================================================================================\n");
-  printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
-  printf("========================================================================================================================================================================\n");
 
   for (int i = 0; i < *num_registros; i++)
   {
     if (registros[i].Matricula == numero_matricula)
     {
+      printf("Registros almacenados:\n");
+      printf("========================================================================================================================================================================\n");
+      printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+      printf("========================================================================================================================================================================\n");
+
       printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
       printf("========================================================================================================================================================================\n");
 
@@ -636,9 +746,9 @@ void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros,
   fprintf(fa, "|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
   fprintf(fa, "========================================================================================================================================================================\n");
 
-  for (int i = 0; i < *num_registros; i++)
+  for (int i = 0; i <= *num_registros; i++)
   {
-    if (registros[i].Matricula != matricula_a_eliminar)
+    if (registros[i].Status == 1)
     {
       fprintf(fa, "| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
       fprintf(fa, "========================================================================================================================================================================\n");
@@ -649,15 +759,16 @@ void eliminarRegistrotexto(struct curp_registro registros[], int *num_registros,
 int buscar2(struct curp_registro registros[], int *num_registros, int matricula)
 {
   int i;
-  printf("\nRegistros almacenados:\n");
-  printf("========================================================================================================================================================================\n");
-  printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
-  printf("========================================================================================================================================================================\n");
 
   for (i = 0; i < *num_registros; i++)
   {
     if (registros[i].Matricula == matricula)
     {
+      printf("\nRegistros almacenados:\n");
+      printf("========================================================================================================================================================================\n");
+      printf("|  No. | Matricula |    Nombre    |    Nombre 2   | Apellido Pat.   | Apellido Mat.   | Fecha de Nac. | Edad |  Sexo  |   Lugar de Nacimiento     |        CURP        |\n");
+      printf("========================================================================================================================================================================\n");
+
       printf("| %-4d | %-9d | %-12s | %-13s | %-15s | %-15s | %-13s | %-4d | %-6s | %-25s | %-18s |\n", i + 1, registros[i].Matricula, registros[i].Nombre, registros[i].Nombre2, registros[i].ApPat, registros[i].ApMat, registros[i].Fecha, registros[i].Edad, registros[i].sexo, registros[i].Lugar, registros[i].CURP);
       printf("========================================================================================================================================================================\n");
 
@@ -667,4 +778,25 @@ int buscar2(struct curp_registro registros[], int *num_registros, int matricula)
 
   printf("NO SE ENCONTRO LA MATRICULA\n\n");
   return 0;
+}
+void dar_de_alta_registro(struct curp_registro registros[], int *num_registros, int matricula_de_alta)
+{
+  int i;
+  for (i = 0; i <= *num_registros; i++)
+  {
+    if (registros[i].Matricula == matricula_de_alta)
+    {
+      if (registros[i].Status == 0)
+      {
+        registros[i].Status = 1;
+        printf("REGISTRO DADO DE ALTA\n");
+
+        (*num_registros)++;
+      }
+      else
+      {
+        printf("EL REGSITRO NO ESTA DADO DE BAJA");
+      }
+    }
+  }
 }
